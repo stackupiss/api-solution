@@ -18,7 +18,63 @@ components:
                     type: string
             required:
             - error
+        city-form:
+            type: object
+            properties:
+                city:
+                    type: string
+                    description: City name
+                "loc[0]":
+                    type: number
+                    description: Latitude
+                "loc[1]":
+                    type: number
+                    description: Longitude
+                pop:
+                    type: number
+                    description: City's population
+                    minimum: 300
+                state:
+                    description: States
+                    type: string
+                    enum: [ "MA", "RI", "NH", "ME", "VT", "CT", "NY", "NJ", 
+                            "PA", "DE", "DC", "MD", "VA", "WV", "NC", "SC", 
+                            "GA", "FL", "AL", "TN", "MS", "KY", "OH", "IN", 
+                            "MI", "IA", "WI", "MN", "SD", "ND", "MT", "IL", 
+                            "MO", "KS", "NE", "LA", "AR", "OK", "TX", "CO", 
+                            "WY", "ID", "UT", "AZ", "NM", "NV", "CA", "HI", 
+                            "OR", "WA", "AK" ]
+            required: [ "city", "loc[0]", "loc[1]", "pop", "state" ]
+
 paths:
+    /api/city:
+        post:
+            description: Add a city 
+            operationId: addCity
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "city-schema.json"
+                    application/x-www-form-urlencoded:
+                        schema:
+                            $ref: "#/components/schemas/city-form"
+
+            responses:
+                201:
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "city-schema.json"
+                400:
+                    description: Error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/error"
+
     /api/state/{stateId}:
         get:
             description: Return a list of cities from the state
