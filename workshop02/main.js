@@ -3,6 +3,7 @@ const compression = require('compression')
 
 const express = require('express')
 
+const RestaurantDB = require('./restaurantdb');
 const CitiesDB = require('./citiesdb');
 
 //Load application keys
@@ -11,10 +12,10 @@ const keys = require('./keys.json')
 
 console.info(`Using ${keys.mongo}`);
 
-const db = CitiesDB({  
+const db = RestaurantDB({  
 	connectionUrl: keys.mongo, 
-	databaseName: 'zips', 
-	collectionName: 'city'
+	databaseName: 'lifestyle', 
+	collectionName: 'restaurant'
 });
 
 const app = express();
@@ -22,15 +23,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 // Start of workshop
 
 // Mandatory workshop
-// TODO GET /api/states
-app.get('/api/states', (req, resp) => {
+// TODO GET /api/cities
+app.get('/api/cities', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.findAllStates()
+	db.findAllCities()
 		.then(result => {
 			resp.status(200).json(result)
 		})
@@ -39,12 +41,13 @@ app.get('/api/states', (req, resp) => {
 		})
 })
 
-
-// TODO GET /api/state/:state
-app.get('/api/state/:state', 
+// TODO GET /api/restaurants/:city
+app.get('/api/restaurants/:city', 
 	range({ accept: 'items', limit: 20 }),
 	compression(),
 	(req, resp) => {
+
+		console.info('in get')
 
 		const offset = req.range.first;
 		const limit = (req.range.last - req.range.first) + 1
@@ -52,8 +55,8 @@ app.get('/api/state/:state',
 		resp.type('application/json')
 
 		Promise.all([ 
-				db.findCitiesByName(req.params.state, { offset: offset, limit: limit }),
-				db.countCitiesInState(req.params.state) ])
+				db.findRestaurantByCity(req.params.city, { offset: offset, limit: limit }),
+				db.countRestaurantsInCity(req.params.city) ])
 			.then(result => {
 				resp.status(206)
 				resp.set('Accept-Ranges', 'items')
@@ -62,7 +65,7 @@ app.get('/api/state/:state',
 					last: req.range.last,
 					length: result[1]
 				})
-				resp.json(result[0])
+				resp.json(result[0].map(v => `/api/restaurant/${v}`))
 			})
 			.catch(error => {
 				resp.status(400).json({ error: error });
@@ -70,39 +73,41 @@ app.get('/api/state/:state',
 	}
 );
 
-
-// TODO GET /api/city/:cityId
-app.get('/api/city/:cityId', (req, resp) => {
+// TODO GET /api/restaurant/:restId
+app.get('/api/restaurant/:restId', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.findCityById(req.params.cityId)
+	db.findRestaurantById(req.params.restId)
 		.then(result => {
 			if (result.length > 0) 
-				return resp.status(200).json(result)
-			resp.status(404).json({ error: `City '${req.params.cityId}' not found` })
+				return resp.status(200).json(result[0])
+			resp.status(404).json({ error: `City '${req.params.restId}' not found` })
 		})
 		.catch(error => {
 			resp.status(400).type('application/json').json({ error: error });
 		})
 })
 
-
-// TODO POST /api/city
-app.post('/api/city', (req, resp) => {
+// TODO POST /api/restaurant
+app.post('/api/restaurant', (req, resp) => {
 
 	const params = {
-		city: req.body.city,
-		loc: req.body.loc.map(v => parseFloat(v)),
-		pop: parseInt(req.body.pop),
-		state: req.body.state
+		URL: req.body.url,
+		address: req.body.address,
+		"address line 2": req.body.city,
+		name: req.body.name,
+		outcode: req.body.outcode,
+		postcode: req.body.postcode,
+		rating: parseInt(req.body.rating) || 'Not yet rated',
+		type_of_food: req.body.type_of_food
 	}
 
 	resp.type('application/json')
 
-	db.insertCity(params)
+	db.insertRestaurant(params)
 		.then(result => {
-			resp.status(201).json(result.ops[0])
+			resp.status(201).json(result)
 		})
 		.catch(error => {
 			console.error(error);
@@ -111,8 +116,10 @@ app.post('/api/city', (req, resp) => {
 });
 
 // Optional workshop
-// TODO HEAD /api/state/:state
-app.head('/api/state/:state', (req, resp) => {
+// TODO HEAD /api/restaurants/:city
+// Must be placed before GET, otherwise GET will process
+// the request
+app.head('/api/restaurants/:city', (req, resp) => {
 	resp.type('application/json')
 		.set('Accept-Ranges', 'items')
 		.set('Accept-Encoding', 'gzip')

@@ -1,5 +1,6 @@
 const uuidv1 = require('uuid/v1')
 const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectId;
 
 const f = function(config) {
 	this.config = config;
@@ -12,7 +13,7 @@ f.prototype.getDB = function() {
 			.then(() => this.client.db(this.config.databaseName))
 	);
 }
-f.prototype.findCitiesByState = function(state, params = {}) {
+f.prototype.findRestaurantByCity = function(city, params = {}) {
 	const limit = parseInt(params['limit']) || 10;
 	const offset = parseInt(params['offset']) || 0;
 	return (
@@ -20,8 +21,8 @@ f.prototype.findCitiesByState = function(state, params = {}) {
 			.then(db => 
 				db.collection(this.config.collectionName)
 					.find({ 
-						state: { 
-							$regex: `.*${state}.*`, 
+						'address line 2': { 
+							$regex: `.*${city}.*`, 
 							$options: 'i' 
 						} 
 					}) 
@@ -33,14 +34,15 @@ f.prototype.findCitiesByState = function(state, params = {}) {
 	);
 }
 
-f.prototype.countCitiesInState = function(state) {
+
+f.prototype.countRestaurantsInCity = function(city) {
 	return (
 		this.getDB()
 			.then(db => 
 				db.collection(this.config.collectionName)
 					.find({ 
-						state: { 
-							$regex: `.*${state}.*`, 
+						'address line 2': { 
+							$regex: `.*${city}.*`, 
 							$options: 'i' 
 						} 
 					})
@@ -49,12 +51,22 @@ f.prototype.countCitiesInState = function(state) {
 	);
 }
 
-f.prototype.findCityById = function(id) {
+f.prototype.findAllCities = function() {
 	return (
 		this.getDB()
 			.then(db => 
 				db.collection(this.config.collectionName)
-					.find({ _id: id })
+					.distinct('address line 2')
+		)
+	);
+}
+
+f.prototype.findRestaurantById = function(id) {
+	return (
+		this.getDB()
+			.then(db => 
+				db.collection(this.config.collectionName)
+					.find({ _id: new ObjectId(id) })
 					.toArray()
 			)
 	);
@@ -76,24 +88,14 @@ f.prototype.findCitiesByName = function(city) {
 	);
 }
 
-f.prototype.findAllStates = function() {
-	return (
-		this.getDB()
-			.then(db => 
-				db.collection(this.config.collectionName)
-					.distinct('state')
-		)
-	);
-}
-
-f.prototype.insertCity = function(params) {
-	params._id = uuidv1().substring(0, 8);
+f.prototype.insertRestaurant = function(params) {
+	//params._id = uuidv1().substring(0, 8);
 	return (
 		this.getDB()
 			.then(db => 
 				db.collection(this.config.collectionName)
 					.insertOne(params)
-			)
+			).then(result => result.ops[0])
 	);
 }
 
