@@ -92,6 +92,9 @@ app.get('/api/restaurant/:restId', (req, resp) => {
 // TODO POST /api/restaurant
 app.post('/api/restaurant', (req, resp) => {
 
+	if (!db.validateRestaurant(req.body)) 
+		return resp.status(400).json({ error: 'Missing fields' })
+
 	const params = {
 		URL: req.body.url,
 		address: req.body.address,
@@ -117,42 +120,27 @@ app.post('/api/restaurant', (req, resp) => {
 
 // Optional workshop
 // TODO HEAD /api/restaurants/:city
-// Must be placed before GET, otherwise GET will process
-// the request
+// IMPORTANT Must be placed before GET, otherwise GET 
+// will process the request
 app.head('/api/restaurants/:city', (req, resp) => {
 	resp.type('application/json')
 		.set('Accept-Ranges', 'items')
 		.set('Accept-Encoding', 'gzip')
-		.end()
+		.json({})
 })
 
 // TODO GET /state/:state/count
-app.get('/api/state/:state/count', (req, resp) => {
+app.get('/api/restaurants/:city/count', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.countCitiesInState(req.params.state)
+	db.countRestaurantsInCity(req.params.city)
 		.then(result => {
 			resp.status(200)
 				.json({
-					state: req.params.state.toUpperCase(),
-					cities: result
+					state: req.params.city,
+					restaurants_count: result
 				})
-		})
-		.catch(error => {
-			resp.status(400).json({ error: error });
-		})
-})
-
-// TODO GET /city/:name
-app.get('/api/city/:name', (req, resp) => {
-
-	resp.type('application/json')
-
-	db.findCitiesByName(req.params.cityId)
-		.then(result => {
-			resp.status(200)
-				.json(result)
 		})
 		.catch(error => {
 			resp.status(400).json({ error: error });

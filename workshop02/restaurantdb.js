@@ -72,22 +72,6 @@ f.prototype.findRestaurantById = function(id) {
 	);
 }
 
-f.prototype.findCitiesByName = function(city) {
-	return (
-		this.getDB()
-			.then(db => 
-				db.collection(this.config.collectionName)
-					.find({
-						city: {
-							$regex: `.*${city}.*`, 
-							$options: 'i' 
-						}
-					})
-					.toArray()
-			)
-	);
-}
-
 f.prototype.insertRestaurant = function(params) {
 	//params._id = uuidv1().substring(0, 8);
 	return (
@@ -102,23 +86,19 @@ f.prototype.insertRestaurant = function(params) {
 f.prototype.form2json = function(form) {
 	const result = {}
 
-	if ('city' in form)
-		result.city = form.city;
-
-	if ('loc' in form) {
-		if (Array.isArray(form.loc))
-			result.loc = form.loc.map(v => parseFloat(v))
-		else if (typeof form.loc === 'string')
-			result.loc = form.loc.split(',').map(v => parseFloat(v));
-	}
-
-	if ('pop' in form)
-		result.pop = parseInt(form.pop)
-
-	if ('state' in form)
-		result.state = form.state.toUpperCase()
+	for (let k of Object.keys(form))
+		result[k] = form[k]
 
 	return (result)
+}
+
+f.prototype.MANDATORY_FIELDS = [ 'url', 'address', 'city', 'name', 'outcode', 'postcode', 'type_of_food' ]
+f.prototype.validateRestaurant = function(form) {
+	for (let f of this.MANDATORY_FIELDS) {
+		if (!(f in form))
+			return (false);
+	}
+	return (true);
 }
 
 module.exports = (config) => {
