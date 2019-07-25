@@ -134,7 +134,36 @@ app.get('/api/city/:cityId', (req, resp) => {
 
 
 // TODO POST /api/city
-app.post('/api/city', (req, resp) => {
+app.post('/api/city', 
+	// Convert forms to json
+	/*
+	(req, resp, next) => {
+		switch (req.header('content-type')) {
+			case 'application/x-www-form-urlencoded':
+				req.jsonPayload = citiesdb.form2json(req.body);
+				break;
+			case 'application/json':
+				req.jsonPayload = req.body;
+				break;
+
+			default:
+				req.jsonPayload = {}
+		}
+		next()
+	},
+	*/
+	// Only validate application/json payload
+	// If you're using OAS3 then you do not need to validate
+	// the schema as you should have the payload's schema 
+	// in your OAS3
+	//schemaValidator.validate({ jsonPayload: citySchema }), 
+	(req, resp) => {
+	
+	// No longer need to perform checks. Handle by either 
+	// JSON schema or OAS3
+	// Perform a simple check
+	// if (!citiesdb.validateForm(req.body))
+	//		return resp.status(400).json({ error: 'Incomplete parameters' })
 
 	const params = {
 		city: req.body.city,
@@ -157,6 +186,8 @@ app.post('/api/city', (req, resp) => {
 
 // Optional workshop
 // TODO HEAD /api/state/:state
+// IMPORTANT: HEAD must be place before GET for the
+// same resource. Otherwise the GET handler will be invoked
 app.head('/api/state/:state', (req, resp) => {
 	resp.type('application/json')
 		.set('Accept-Ranges', 'items')
@@ -210,11 +241,19 @@ app.get('/health', (req, resp) => {
 app.use('/schema', express.static(join(__dirname, 'schema')));
 
 app.use((error, req, resp, next) => {
-	if (error instanceof ValidationError)
+
+	if (error instanceof ValidationError) {
+		console.error('Schema validation error: ', error)
 		return resp.status(400).type('application/json').json({ error: error });
-	else if (error.status)
+	}
+
+	else if (error.status) {
+		console.error('OpenAPI specification error: ', error)
 		return resp.status(400).type('application/json').json({ error: error });
-	next();
+	}
+
+	console.error('Error: ', error);
+	resp.status(400).type('application/json').json({ error: error });
 });
 
 db.getDB()

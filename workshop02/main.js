@@ -91,6 +91,10 @@ app.get('/api/city/:cityId', (req, resp) => {
 // TODO POST /api/city
 app.post('/api/city', (req, resp) => {
 
+	// Perform a simple check
+	if (!citiesdb.validateForm(req.body))
+		return resp.status(400).json({ error: 'Incomplete parameters' })
+
 	const params = {
 		city: req.body.city,
 		loc: req.body.loc.map(v => parseFloat(v)),
@@ -112,6 +116,8 @@ app.post('/api/city', (req, resp) => {
 
 // Optional workshop
 // TODO HEAD /api/state/:state
+// IMPORTANT: HEAD must be place before GET for the
+// same resource. Otherwise the GET handler will be invoked
 app.head('/api/state/:state', (req, resp) => {
 	resp.type('application/json')
 		.set('Accept-Ranges', 'items')
@@ -151,7 +157,6 @@ app.get('/api/city/:name', (req, resp) => {
 			resp.status(400).json({ error: error });
 		})
 })
-
 
 // End of workshop
 

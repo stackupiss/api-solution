@@ -97,6 +97,14 @@ f.prototype.insertCity = function(params) {
 	);
 }
 
+f.prototype.MANDATORY_FIELDS = [ 'city', 'loc', 'pop', 'state' ]
+f.prototype.validateForm = function(form) {
+	for (let f of this.MANDATORY_FIELDS)
+		if (!(f in form))
+			return (false);
+	return (true)
+}
+
 f.prototype.form2json = function(form) {
 	const result = {}
 
