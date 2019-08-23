@@ -58,56 +58,67 @@ new OpenAPIValidator({
 
 // TODO 2/3 Copy your routes from workshop03 here
 
-// TODO GET /api/states
-const precondOptions = {
-	stateAsync: (req) => 
-		new Promise((resolve, reject) => {
-			// Returns either the last modified date of the resource
-			// or the latest ETag
-			resolve('"SomeETag"')
-		})
-}
 
+// TODO GET /api/states
 app.get('/api/states', 
 	cacheControl({ maxAge: 30, private: false }),
-	preconditions(precondOptions),
 	(req, resp) => {
 
-	resp.type('application/json')
+        resp.type('application/json')
 
-	db.findAllStates()
-		.then(result => {
-			resp.status(200).json(result)
-		})
-		.catch(error => {
-			resp.status(400).json({ error: error });
-		})
-})
+        db.findAllStates()
+            .then(result => {
+                resp.status(200).json(result)
+            })
+            .catch(error => {
+                resp.status(400).json({ error: error });
+            })
+    }
+-)
 
 
 // TODO GET /api/state/:state
+
+// etag that returns tags as <state abbrevation><number of cities in state>
+// ignoring the Range header
+const precondOptions = {
+    stateAsync: (req) => 
+        db.countCitiesInState(req.params.state)
+            .then(result => {
+                const state = req.params.state.toLowerCase()
+                return ({
+                    etag: `"${state}${result}"`,
+                    //lastModified: "last_modified_date"
+                })
+            })
+}
+
 app.get('/api/state/:state', 
+    //Ignore the Range header
+	preconditions(precondOptions),
 	range({ accept: 'items', limit: 20 }),
 	compression(),
 	(req, resp) => {
 
 		const offset = req.range.first;
-		const limit = (req.range.last - req.range.first) + 1
+        const limit = (req.range.last - req.range.first) + 1
+        const state = req.params.state;
 
 		resp.type('application/json')
 
 		Promise.all([ 
-				db.findCitiesByName(req.params.state, { offset: offset, limit: limit }),
-				db.countCitiesInState(req.params.state) ])
-			.then(result => {
+				db.findCitiesByName(state, { offset: offset, limit: limit }),
+				db.countCitiesInState(state) ])
+			.then(results => {
 				resp.status(206)
-				resp.set('Accept-Ranges', 'items')
+                resp.set('Accept-Ranges', 'items')
+                resp.set('ETag', `"${state.toLowerCase()}${results[1]}"`)
 				resp.range({
 					first: req.range.first,
 					last: req.range.last,
-					length: result[1]
+					length: results[1]
 				})
-				resp.json(result[0])
+				resp.json(results[0])
 			})
 			.catch(error => {
 				resp.status(400).json({ error: error });
