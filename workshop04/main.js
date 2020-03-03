@@ -19,14 +19,9 @@ const express = require('express')
 
 const CitiesDB = require('./citiesdb');
 
-const serviceId = uuid().substring(0, 8);
-const serviceName = `zips`
-
 //Load application keys
 //Rename _keys.json file to keys.json
 const keys = require('./keys.json')
-
-console.info(`Using ${keys.mongo}`);
 
 // TODO change your databaseName and collectioName 
 // if they are not the defaults below
@@ -47,7 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Start of workshop
 
-// TODO 1/3 Load schemans
+// TODO 1/2 Load schemans
 
 const citySchema = require('./schema/city-schema.json');
 
@@ -56,7 +51,7 @@ new OpenAPIValidator({
 }).install(app)
 
 
-// TODO 2/3 Copy your routes from workshop03 here
+// TODO 2/2 Copy your routes from workshop03 here
 
 
 // TODO GET /api/states
@@ -274,31 +269,6 @@ db.getDB()
 		console.info('Connected to MongoDB. Starting application');
 		app.listen(PORT, () => {
 			console.info(`Application started on port ${PORT} at ${new Date()}`);
-			console.info(`\tService id: ${serviceId}`);
-
-			// TODO 3/3 Add service registration here
-			console.info(`Registering service ${serviceName}:${serviceId}`)
-			consul.agent.service.register({
-				id: serviceId,
-				name: serviceName,
-				port: PORT,
-				check: {
-					ttl: '10s',
-					deregistercriticalserviceafter: '30s'
-				}
-			}).then(() => {
-				setInterval(
-					() => {
-						consul.agent.check.pass({ id: `service:${serviceId}` })
-					}, 10000 //10s
-				)
-				process.on('SIGINT', () => {
-					console.info(`Deregistering service ${serviceName}:${serviceId}`)
-					consul.agent.service.deregister({ id: serviceId })
-						.finally(() => process.exit())
-				})
-			}).catch(error => console.error('Error: ', error))
-
 		});
 	})
 	.catch(error => {
