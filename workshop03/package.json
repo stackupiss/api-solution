@@ -13,7 +13,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-json-validator-middleware": "^2.0.0",
-    "express-openapi-validator": "^1.2.1",
+    "express-openapi-validator": "^3.9.2",
     "express-range": "^2.0.1",
     "mongodb": "^3.2.7",
     "path": "^0.12.7",

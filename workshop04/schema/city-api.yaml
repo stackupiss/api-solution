@@ -1,4 +1,4 @@
-openapi: "3.0.2"
+openapi: "3.0.3"
 
 info:
     title: "Cities API"
@@ -18,6 +18,15 @@ components:
                     type: string
             required:
             - error
+        states:
+            type: string
+            enum: [ "MA", "RI", "NH", "ME", "VT", "CT", "NY", "NJ", 
+                    "PA", "DE", "DC", "MD", "VA", "WV", "NC", "SC", 
+                    "GA", "FL", "AL", "TN", "MS", "KY", "OH", "IN", 
+                    "MI", "IA", "WI", "MN", "SD", "ND", "MT", "IL", 
+                    "MO", "KS", "NE", "LA", "AR", "OK", "TX", "CO", 
+                    "WY", "ID", "UT", "AZ", "NM", "NV", "CA", "HI", 
+                    "OR", "WA", "AK" ]
         city-form:
             type: object
             properties:
@@ -56,7 +65,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: "city-schema.json"
+                            $ref: "#/components/schemas/city-form"
                     application/x-www-form-urlencoded:
                         schema:
                             $ref: "#/components/schemas/city-form"
@@ -67,7 +76,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "city-schema.json"
+                                $ref: "#/components/schemas/city-form"
                 400:
                     description: Error
                     content:
@@ -84,7 +93,7 @@ paths:
               in: path
               required: true
               schema:
-                $ref: "city-schema.json#/definitions/state"
+                $ref: "#/components/schemas/states"
 
             responses:
                 200:
@@ -106,7 +115,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "city-schema.json#/definitions/state"
+                                $ref: "#/components/schemas/states"
                 400:
                     description: Error
                     content:

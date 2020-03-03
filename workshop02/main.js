@@ -3,7 +3,7 @@ const compression = require('compression')
 
 const express = require('express')
 
-const CitiesDB = require('./citiesdb');
+const CitiesDB = require('./citiesdb')
 
 //Load application keys
 //Rename _keys.json file to keys.json
@@ -52,7 +52,7 @@ app.get('/api/state/:state',
 		resp.type('application/json')
 
 		Promise.all([ 
-				db.findCitiesByName(req.params.state, { offset: offset, limit: limit }),
+				db.findCitiesByState(req.params.state, { offset: offset, limit: limit }),
 				db.countCitiesInState(req.params.state) ])
 			.then(result => {
 				resp.status(206)
@@ -148,7 +148,7 @@ app.get('/api/city/:name', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.findCitiesByName(req.params.cityId)
+	db.findCitiesByName(req.params.name)
 		.then(result => {
 			resp.status(200)
 				.json(result)
