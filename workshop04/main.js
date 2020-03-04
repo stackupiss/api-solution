@@ -78,7 +78,19 @@ new OpenAPIValidator({
 							  //lastModified: "last_modified_date"
 						 })
 					})
-	}
+    }
+
+	// Optional workshop
+	// TODO HEAD /api/state/:state
+	// IMPORTANT: HEAD must be place before GET for the
+	// same resource. Otherwise the GET handler will be invoked
+	app.head('/api/state/:state', (req, resp) => {
+        resp.status(200)
+		resp.type('application/json')
+			.set('Accept-Ranges', 'items')
+			.set('Accept-Encoding', 'gzip')
+			.end()
+	})
 
 	app.get('/api/state/:state', 
 		 //Ignore the Range header
@@ -99,7 +111,8 @@ new OpenAPIValidator({
 				.then(results => {
 					resp.status(206)
 						 resp.set('Accept-Ranges', 'items')
-						 resp.set('ETag', `"${state.toLowerCase()}${results[1]}"`)
+			                .set('Accept-Encoding', 'gzip')
+                            .set('ETag', `"${state.toLowerCase()}${results[1]}"`)
 					resp.range({
 						first: req.range.first,
 						last: req.range.last,
@@ -112,7 +125,6 @@ new OpenAPIValidator({
 				})
 		}
 	);
-
 
 	// TODO GET /api/city/:cityId
 	app.get('/api/city/:cityId', (req, resp) => {
@@ -181,17 +193,6 @@ new OpenAPIValidator({
 				resp.status(400).json({ error: error });
 			})
 	});
-
-	// Optional workshop
-	// TODO HEAD /api/state/:state
-	// IMPORTANT: HEAD must be place before GET for the
-	// same resource. Otherwise the GET handler will be invoked
-	app.head('/api/state/:state', (req, resp) => {
-		resp.type('application/json')
-			.set('Accept-Ranges', 'items')
-			.set('Accept-Encoding', 'gzip')
-			.end()
-	})
 
 	// TODO GET /state/:state/count
 	app.get('/api/state/:state/count', (req, resp) => {

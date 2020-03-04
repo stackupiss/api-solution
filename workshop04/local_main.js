@@ -37,6 +37,7 @@ new OpenAPIValidator({
 	apiSpec: join(__dirname, 'schema', 'city-api.yaml')
 }).install(app)
 .then(() => {
+
     // Mandatory workshop
     // TODO GET /api/states
     app.get('/api/states', 
@@ -51,7 +52,7 @@ new OpenAPIValidator({
     )
 	// etag that returns tags as <state abbrevation><number of cities in state>
 	// ignoring the Range header
-	const precondOptions = {
+    const precondOptions = {
         stateAsync: (req) => {
             const count = db.countCitiesInState(req.params.state)
             const state = req.params.state.toLowerCase()
@@ -62,7 +63,19 @@ new OpenAPIValidator({
                 }
             )
         }
-   }
+    }
+	
+    // Optional workshop
+    // TODO HEAD /api/state/:state
+    // IMPORTANT: HEAD must be place before GET for the
+    // same resource. Otherwise the GET handler will be invoked
+    app.head('/api/state/:state', (req, resp) => {
+        resp.status(200)
+        resp.type('application/json')
+            .set('Accept-Ranges', 'items')
+            .set('Accept-Encoding', 'gzip')
+            .end()
+    })
 
     // TODO GET /api/state/:state
     app.get('/api/state/:state', 
@@ -82,7 +95,8 @@ new OpenAPIValidator({
 
             resp.status(206)
             resp.set('Accept-Ranges', 'items')
-            resp.set('ETag', `"${state.toLowerCase()}${cityCount}"`)
+                .set('Accept-Encoding', 'gzip')
+                .set('ETag', `"${state.toLowerCase()}${cityCount}"`)
             resp.range({
                 first: req.range.first,
                 last: req.range.last,
@@ -91,7 +105,6 @@ new OpenAPIValidator({
             resp.json(cityNames)
         }
     );
-
 
     // TODO GET /api/city/:cityId
     app.get('/api/city/:cityId', (req, resp) => {
@@ -128,16 +141,6 @@ new OpenAPIValidator({
         resp.status(201).json({ message: 'Added' })
     });
 
-    // Optional workshop
-    // TODO HEAD /api/state/:state
-    // IMPORTANT: HEAD must be place before GET for the
-    // same resource. Otherwise the GET handler will be invoked
-    app.head('/api/state/:state', (req, resp) => {
-        resp.type('application/json')
-            .set('Accept-Ranges', 'items')
-            .set('Accept-Encoding', 'gzip')
-            .end()
-    })
 
     // TODO GET /state/:state/count
     app.get('/api/state/:state/count', (req, resp) => {
