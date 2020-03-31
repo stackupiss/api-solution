@@ -110,9 +110,9 @@ new OpenAPIValidator({
 					db.countCitiesInState(state) ])
 				.then(results => {
 					resp.status(206)
-						 resp.set('Accept-Ranges', 'items')
-			                .set('Accept-Encoding', 'gzip')
-                            .set('ETag', `"${state.toLowerCase()}${results[1]}"`)
+                    resp.set('Accept-Ranges', 'items')
+                    .set('Accept-Encoding', 'gzip')
+                    .set('ETag', `"${state.toLowerCase()}${results[1]}"`)
 					resp.range({
 						first: req.range.first,
 						last: req.range.last,
