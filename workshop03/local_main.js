@@ -5,10 +5,7 @@ const cors = require('cors');
 const range = require('express-range')
 const compression = require('compression')
 
-const { Validator, ValidationError } = require('express-json-validator-middleware')
 const  OpenAPIValidator  = require('express-openapi-validator').OpenApiValidator;
-
-const schemaValidator = new Validator({ allErrors: true, verbose: true });
 
 const express = require('express')
 
@@ -30,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 // Start of workshop
 
 // TODO 1/2 Load schemans
-const citySchema = require('./schema/city-schema.json');
+
 new OpenAPIValidator({ 
 	apiSpec: join(__dirname, 'schema', 'city-api.yaml')
 }).install(app)
@@ -151,18 +148,9 @@ new OpenAPIValidator({
 
     app.use((error, req, resp, next) => {
 
-        if (error instanceof ValidationError) {
-            console.error('Schema validation error: ', error)
-            return resp.status(400).type('application/json').json({ error: error });
-        }
-
-        else if (error.status) {
-            console.error('OpenAPI specification error: ', error)
-            return resp.status(400).type('application/json').json({ error: error });
-        }
-
-        console.error('Error: ', error);
-        resp.status(400).type('application/json').json({ error: error });
+		  console.error('Error: ', error)
+		  return resp.status(error.states || 500).type('application/json')
+			 .json({ error: error });
 
     });
 
