@@ -30,8 +30,10 @@ app.use(express.urlencoded({ extended: true }));
 
 new OpenAPIValidator({ 
 	apiSpec: join(__dirname, 'schema', 'city-api.yaml')
-}).install(app)
+})
+.install(app)
 .then(() => {
+
     // Mandatory workshop
     // TODO GET /api/states
     app.get('/api/states', (req, resp) => {
@@ -41,7 +43,7 @@ new OpenAPIValidator({
         const result = db.findAllStates()
         resp.status(200).json(result)
     })
-	//
+    //
     // Optional workshop
     // TODO HEAD /api/state/:state
     // IMPORTANT: HEAD must be place before GET for the
