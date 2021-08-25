@@ -13,15 +13,15 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-cache-controller": "^1.1.0",
-    "express-json-validator-middleware": "^2.1.1",
-    "express-openapi-validator": "^3.12.1",
+    "express-json-validator-middleware": "^2.2.1",
+    "express-openapi-validator": "^4.13.0",
     "express-preconditions": "^1.0.5",
     "express-range": "^2.0.1",
-    "mongodb": "^3.5.6",
+    "mongodb": "^4.1.1",
     "path": "^0.12.7",
-    "uuid": "^7.0.3"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "1.0.12-4.3.0"
+    "@openapitools/openapi-generator-cli": "2.3.10"
   }
 }

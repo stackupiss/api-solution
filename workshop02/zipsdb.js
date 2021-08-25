@@ -1,4 +1,4 @@
-const uuidv1 = require('uuid/v1')
+const uuidv1 = require('uuid')
 
 // { "_id" : "01001", "city" : "AGAWAM", "loc" : [ -72.622739, 42.070206 ], "pop" : 15338, "state" : "MA" },
 const f = function(data) {

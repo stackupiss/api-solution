@@ -3,19 +3,11 @@ const compression = require('compression')
 
 const express = require('express')
 
-const CitiesDB = require('./citiesdb')
+const data = require('./zips')
+const CitiesDB = require('./zipsdb')
 
 //Load application keys
-//Rename _keys.json file to keys.json
-const keys = require('./keys.json')
-
-console.info(`Using ${keys.mongo}`);
-
-const db = CitiesDB({  
-	connectionUrl: keys.mongo, 
-	databaseName: 'zips', 
-	collectionName: 'city'
-});
+const db = CitiesDB(data);
 
 const app = express();
 
@@ -30,13 +22,8 @@ app.get('/api/states', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.findAllStates()
-		.then(result => {
-			resp.status(200).json(result)
-		})
-		.catch(error => {
-			resp.status(400).json({ error: error });
-		})
+	const result = db.findAllStates()
+	resp.status(200).json(result)
 })
 
 
@@ -51,22 +38,17 @@ app.get('/api/state/:state',
 
 		resp.type('application/json')
 
-		Promise.all([ 
-				db.findCitiesByState(req.params.state, { offset: offset, limit: limit }),
-				db.countCitiesInState(req.params.state) ])
-			.then(result => {
-				resp.status(206)
-				resp.set('Accept-Ranges', 'items')
-				resp.range({
-					first: req.range.first,
-					last: req.range.last,
-					length: result[1]
-				})
-				resp.json(result[0])
-			})
-			.catch(error => {
-				resp.status(400).json({ error: error });
-			})
+		const cityNames = db.findCitiesByState(req.params.state, { offset: offset, limit: limit })
+		const cityCount = db.countCitiesInState(req.params.state) 
+
+		resp.status(206)
+		resp.set('Accept-Ranges', 'items')
+		resp.range({
+			first: req.range.first,
+			last: req.range.last,
+			length: cityCount
+		})
+		resp.json(cityNames)
 	}
 );
 
@@ -76,15 +58,12 @@ app.get('/api/city/:cityId', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.findCityById(req.params.cityId)
-		.then(result => {
-			if (result.length > 0) 
-				return resp.status(200).json(result)
-			resp.status(404).json({ error: `City '${req.params.cityId}' not found` })
-		})
-		.catch(error => {
-			resp.status(400).type('application/json').json({ error: error });
-		})
+	const result = db.findCityById(req.params.cityId);
+
+	if (!!result)
+		return resp.status(200).json(result)
+
+	resp.status(404).json({ error: `City '${req.params.cityId}' not found` })
 })
 
 
@@ -105,13 +84,8 @@ app.post('/api/city', (req, resp) => {
 	resp.type('application/json')
 
 	db.insertCity(params)
-		.then(result => {
-			resp.status(201).json(result.ops[0])
-		})
-		.catch(error => {
-			console.error(error);
-			resp.status(400).json({ error: error });
-		})
+
+	resp.status(201).json({ message: 'Added' })
 });
 
 // Optional workshop
@@ -130,46 +104,29 @@ app.get('/api/state/:state/count', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.countCitiesInState(req.params.state)
-		.then(result => {
-			resp.status(200)
-				.json({
-					state: req.params.state.toUpperCase(),
-					cities: result
-				})
-		})
-		.catch(error => {
-			resp.status(400).json({ error: error });
+	const count = db.countCitiesInState(req.params.state)
+	resp.status(200)
+		.json({
+			state: req.params.state.toUpperCase(),
+			cities: count
 		})
 })
 
-// TODO GET /city/:name
+// TODO GET /api/city/:name
 app.get('/api/city/:name', (req, resp) => {
 
 	resp.type('application/json')
 
-	db.findCitiesByName(req.params.name)
-		.then(result => {
-			resp.status(200)
-				.json(result)
-		})
-		.catch(error => {
-			resp.status(400).json({ error: error });
-		})
+	console.info('in here')
+
+	const result = db.findCitiesByName(req.params.name)
+	resp.status(200).json(result)
 })
 
 // End of workshop
 
-db.getDB()
-	.then((db) => {
-		const PORT = parseInt(process.argv[2] || process.env.APP_PORT) || 3000;
+const PORT = parseInt(process.argv[2] || process.env.APP_PORT) || 3000;
+app.listen(PORT, () => {
+	console.info(`Application started on port ${PORT} at ${new Date()}`);
+});
 
-		console.info('Connected to MongoDB. Starting application');
-		app.listen(PORT, () => {
-			console.info(`Application started on port ${PORT} at ${new Date()}`);
-		});
-	})
-	.catch(error => {
-		console.error('Cannot connect to mongo: ', error);
-		process.exit(1);
-	});
